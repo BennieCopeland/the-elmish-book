@@ -1,6 +1,6 @@
 # Elmish Hackernews: Part 2
 
-In this part, we will continue building the Elmish Hackernews application and allowing it to load the story items from different item categories other than the top stories which is what we did in the previous part. It will look something like this:
+In this part, we will continue building the Elmish Hackernews application and allow it to load the story items from different item categories other than the top stories which is what we did in the previous part. It will look something like this:
 
 <div style="width:100%">
   <div style="margin: 0 auto; width:60%;">
@@ -8,7 +8,7 @@ In this part, we will continue building the Elmish Hackernews application and al
   </div>
 </div>
 
-As you can see from the gif above, the application contains tab buttons. Clicking any of which loads the items from a different end point based on the category of the stories: `New` for new stories, `Top` for stories and so on. The application keeps track of the active tab. Besides the tabs, every loaded item contains the *score* of that item. The score is included in the JSON that is returned from the Hackernews API. Finally we are adding a nice icon next to each loaded item.
+As you can see from the gif above, the application contains tab buttons. Clicking any of which loads the items from a different end point based on the category of the stories: `New` for new stories, `Top` for top stories and so on. The application keeps track of the active tab. Besides the tabs, every loaded item contains the *score* of that item. The score is included in the JSON that is returned from the Hackernews API. Finally we are adding a nice icon next to each loaded item.
 
 ### Modelling The State
 
@@ -78,7 +78,7 @@ let loadStoryItems stories = async {
     let! (status, responseText) = Http.get endpoint
     (* the rest is the same, omitted for brevity *)
 ```
-Great! Now the loading story items is refactored. Nothing needs to change in the actual implementation because only end point is different per story category. As for the individual items themselves, loading and parsing also doesn't require any refactoring, except that we now need to decode the `score` field as well of each item as follows:
+Great! Now loading of the story items is refactored. Nothing needs to change in the actual implementation because only the end point is different per story category. As for the individual items themselves, loading and parsing also doesn't require any refactoring, except that we now need to decode the `score` field as well of each item as follows:
 ```fsharp {highlight: [5, 13]}
 type HackernewsItem = {
   id: int
@@ -98,7 +98,7 @@ let itemDecoder : Decoder<HackernewsItem> =
 ### Refactoring `render` and friends
 
 Most of the changes in this part are actually within the user interface where we are adding the tabs and highlighting the currently active tab.
-```fsharp {highlight: ['8-27', 38]}
+```fsharp {highlight: ['15-34', 45]}
 let storyCategories = [
   Stories.New
   Stories.Top
@@ -106,13 +106,20 @@ let storyCategories = [
   Stories.Job
 ]
 
+let storiesName stories =
+  match stories with
+  | Stories.New -> "New"
+  | Stories.Top -> "Top"
+  | Stories.Best -> "Best"
+  | Stories.Job -> "Job"
+
 let renderTabs selectedStories dispatch =
   let switchStories stories =
     if selectedStories <> stories
     then dispatch (ChangeStories stories)
 
   Html.div [
-    prop.className [ "tabs"; "is-toggle"; "is-fullwidth" ]
+    prop.classes [ "tabs"; "is-toggle"; "is-fullwidth" ]
     prop.children [
       Html.ul [
         for stories in storyCategories ->
@@ -141,8 +148,8 @@ let render (state: State) (dispatch: Msg -> unit) =
     ]
   ]
 ```
-Here we are rendering the tabs using the `renderTabs` function which takes as input the currently selected stories category from the state as well as the `dispatch` function because we want to be able to dispatch `Msg.ChangeStories` from the one of the tabs if it is not already selected. Also to highlight the active tab, we give it the [Bulma Tab](https://bulma.io/documentation/components/tabs/) class `is-active` when the currently selected stories category is equal to the corresponding category of the tab.
+Here we are rendering the tabs using the `renderTabs` function. This function takes as input the currently selected stories category from the state as well as the `dispatch` function. When a tab is clicked, if it is not already selected, it will dispatch `Msg.ChangeStories`. Also to highlight the active tab, we give it the [Bulma Tab](https://bulma.io/documentation/components/tabs/) class `is-active` when the currently selected stories category is equal to the corresponding category of the tab.
 
 There are some changes required for rendering the score and the icon in each loaded story item but I don't think it particularly interesting to go through the code in detail like I did for the rest of the application. You can try to implement it yourself based on the gif in the beginning of this section and use the source code at [Zaid-Ajaj/elmish-hackernews-part2](https://github.com/Zaid-Ajaj/elmish-hackernews-part2) as a reference.
 
-That sums it up for part 2 of the Elmish Hackernews application. I admit there hasn't much new theory for the material in this part but it will provide a nice segway into the next part where we use an entirely different technique for loading the story items from Hackernews.
+That sums it up for part 2 of the Elmish Hackernews application. I admit there hasn't been much new theory for the material in this part but it will provide a nice segway into the next part where we use an entirely different technique for loading the story items from Hackernews.
